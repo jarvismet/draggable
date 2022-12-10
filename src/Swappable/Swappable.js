@@ -115,7 +115,7 @@ export default class Swappable extends Draggable {
     }
 
     // swap originally swapped element back
-    if (this.lastOver && this.lastOver !== event.over) {
+    if (this.lastOver && this.lastOver !== event.over && !this.options.preventMove) {
       swap(this.lastOver, event.source);
     }
 
@@ -125,7 +125,7 @@ export default class Swappable extends Draggable {
       this.lastOver = event.over;
     }
 
-    swap(event.source, event.over);
+    if (!this.options.preventMove) swap(event.source, event.over);
 
     const swappableSwappedEvent = new SwappableSwappedEvent({
       dragEvent: event,
@@ -144,6 +144,8 @@ export default class Swappable extends Draggable {
     const swappableStopEvent = new SwappableStopEvent({
       dragEvent: event,
     });
+
+    if (this.options.preventMove && event.source && this.lastOver) swap(event.source, this.lastOver);
 
     this.trigger(swappableStopEvent);
     this.lastOver = null;
