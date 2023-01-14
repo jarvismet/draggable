@@ -1,16 +1,25 @@
 import Draggable from '../Draggable';
-import {SwappableStartEvent, SwappableSwapEvent, SwappableSwappedEvent, SwappableStopEvent} from './SwappableEvent';
+import {
+  SwappableStartEvent,
+  SwappableSwapEvent,
+  SwappableSwappedEvent,
+  SwappableStopEvent
+} from './SwappableEvent';
 
 const onDragStart = Symbol('onDragStart');
 const onDragOver = Symbol('onDragOver');
 const onDragStop = Symbol('onDragStop');
+const onDragMove = Symbol('onDragMove');
 
 /**
  * Returns an announcement message when the Draggable element is swapped with another draggable element
  * @param {SwappableSwappedEvent} swappableEvent
  * @return {String}
  */
-function onSwappableSwappedDefaultAnnouncement({dragEvent, swappedElement}) {
+function onSwappableSwappedDefaultAnnouncement({
+  dragEvent,
+  swappedElement
+}) {
   const sourceText = dragEvent.source.textContent.trim() || dragEvent.source.id || 'swappable element';
   const overText = swappedElement.textContent.trim() || swappedElement.id || 'swappable element';
 
@@ -58,10 +67,12 @@ export default class Swappable extends Draggable {
     this[onDragStart] = this[onDragStart].bind(this);
     this[onDragOver] = this[onDragOver].bind(this);
     this[onDragStop] = this[onDragStop].bind(this);
+    this[onDragMove] = this[onDragMove].bind(this);
 
     this.on('drag:start', this[onDragStart])
       .on('drag:over', this[onDragOver])
-      .on('drag:stop', this[onDragStop]);
+      .on('drag:stop', this[onDragStop])
+      .on('drag:move', this[onDragMove]);
   }
 
   /**
@@ -72,7 +83,8 @@ export default class Swappable extends Draggable {
 
     this.off('drag:start', this._onDragStart)
       .off('drag:over', this._onDragOver)
-      .off('drag:stop', this._onDragStop);
+      .off('drag:stop', this._onDragStop)
+      .off('drag:move', this._onDragMove);
   }
 
   /**
@@ -99,6 +111,7 @@ export default class Swappable extends Draggable {
    */
   [onDragOver](event) {
     if (event.over === event.originalSource || event.over === event.source || event.canceled()) {
+      this.lastOver = null;
       return;
     }
 
@@ -142,13 +155,20 @@ export default class Swappable extends Draggable {
    */
   [onDragStop](event) {
     const swappableStopEvent = new SwappableStopEvent({
-      dragEvent: event,
+      dragEvent: event
     });
 
     if (this.options.preventMove && event.source && this.lastOver) swap(event.source, this.lastOver);
 
     this.trigger(swappableStopEvent);
     this.lastOver = null;
+  }
+
+  [onDragMove](event) {
+
+    let el = event.originalEvent.srcElement
+    this.overEl = el.closest('[data-inventory="true"]') || null
+    if (!this.overEl) this.lastOver = null;
   }
 }
 
